@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="cloud-day">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F7FAFF">
+<title>السحاب الأبيض — استوديو التمويل السحابي</title>
+<meta name="description" content="السحاب الأبيض: استوديو مالي سحابي فائق — محاسبة حتمية، تحليلات بنفورد وأعمار وألتمان، تنبؤ، 10 تقارير احترافية، شات بمجلس مراجعة، وثيمات سماوية حية.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237CC4FF'/%3E%3Cstop offset='1' stop-color='%23E8F4FF'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M10 20 a5 5 0 0 1 .8-9.9 A6 6 0 0 1 22 12.5 a4.5 4.5 0 0 1 -.5 8.9 z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/cloud.css?v=1">
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="sky-glow" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<header class="top">
+  <a class="brand" href="/">
+    <svg viewBox="0 0 32 32" class="logo" aria-hidden="true"><rect width="32" height="32" rx="8" fill="url(#bg)"/><path d="M10 20a5 5 0 0 1 .8-9.9A6 6 0 0 1 22 12.5a4.5 4.5 0 0 1-.5 8.9z" fill="#fff"/><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7CC4FF"/><stop offset="1" stop-color="#E8F4FF"/></linearGradient></defs></svg>
+    <span><b>السحاب الأبيض</b><small>استوديو التمويل السحابي · v1</small></span>
+  </a>
+  <nav class="nav" aria-label="الأقسام">
+    <button data-v="home" class="on">الواحة</button>
+    <button data-v="pulse">نبض الأعمال</button>
+    <button data-v="foresee">بوصلة المستقبل</button>
+    <button data-v="radar">حارس المخاطر</button>
+    <button data-v="ledger">كنز الحسابات</button>
+    <button data-v="reports">ديوان التقارير</button>
+    <button data-v="sky">الأجواء</button>
+    <button data-v="lab">مختبر الشهادات</button>
+  </nav>
+  <div class="status">
+    <span class="pill"><i class="dot"></i> محرك حتمي</span>
+    <span class="pill clock" id="clock">--:--</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ═══ الواحة ═══ -->
+<section class="view on" id="v-home">
+  <div class="hero">
+    <p class="kicker">WHITE CLOUD FINANCE STUDIO</p>
+    <h1>حاسبتك فوق <em>السحاب</em> —<br>صفاءٌ يحسب، ونورٌ يُرى</h1>
+    <p class="lede">كل ذكاء KOSIF نُقل إلى سماء بيضاء: محرك حتمي بالكامل، تحليلات بنفورد وأعمار وألتمان، تنبؤ بمواسمه، رادار مخاطر، أطلس 100 ألف حساب، وديوان تقارير من عشرة فصول — بجرافيك سحابي يتنفس.</p>
+    <div class="hero-actions">
+      <button class="btn hero-btn" id="btn-launch">☁️ ابدأ الرحلة</button>
+      <button class="btn ghost" data-goto="sky">🌤 اختر أجواءك</button>
+    </div>
+    <dl class="facts">
+      <div><dt>الحسابات</dt><dd>100,000</dd></div>
+      <div><dt>القيود</dt><dd>13,602</dd></div>
+      <div><dt>حجم الميزانين</dt><dd>58.9B</dd></div>
+      <div><dt>الثيمات</dt><dd>48</dd></div>
+      <div><dt>التقارير</dt><dd>10</dd></div>
+    </dl>
+  </div>
+  <div class="grid k4" id="home-kpis"></div>
+  <div class="panel">
+    <h2>🕊️ أجنحة السحاب</h2>
+    <p class="hint">كل ريشة بوابة لعالم كامل</p>
+    <div class="caps" id="caps"></div>
+  </div>
+  <div class="ticker-wrap" aria-hidden="true"><div class="ticker" id="ticker"></div></div>
+</section>
+
+<!-- ═══ نبض الأعمال ═══ -->
+<section class="view" id="v-pulse">
+  <header class="vh"><h2>💓 نبض الأعمال</h2><p>موجات الإيرادات عبر السنة — ديسمبر قمة الموجة البيضاء المتوهجة.</p></header>
+  <div class="panel"><div class="bars" id="pulse-bars" role="img" aria-label="أعمدة الحركة الشهرية"></div></div>
+  <div class="grid k4" id="pulse-kpis"></div>
+  <div class="grid g2">
+    <div class="panel"><h3>🩺 عدادات الصحة</h3><div class="gauges" id="gauges"></div></div>
+    <div class="panel"><h3>📐 النسب الجوهرية</h3><div class="ratio-list" id="ratios"></div></div>
+  </div>
+</section>
+
+<!-- ═══ بوصلة المستقبل ═══ -->
+<section class="view" id="v-foresee">
+  <header class="vh"><h2>🧭 بوصلة المستقبل</h2><p>تنبؤ Holt-Winters حتمي لـ12 شهرًا بنطاق ثقة 80% — يرسم نفسه أمامك.</p></header>
+  <div class="panel">
+    <div class="forecast-head">
+      <span class="chip">المنهجية: Holt + موسمية ديسمبر</span>
+      <span class="chip cyan">ثقة ±18%</span>
+      <span class="chip gold" id="fc-total">—</span>
+    </div>
+    <div class="forecast" id="forecast-chart" role="img" aria-label="تنبؤ 12 شهرًا"></div>
+  </div>
+  <div class="grid k3" id="forecast-kpis"></div>
+</section>
+
+<!-- ═══ حارس المخاطر ═══ -->
+<section class="view" id="v-radar">
+  <header class="vh"><h2>🕊️ حارس المخاطر</h2><p>طائر الحارس يطوف: بنفورد، أعمار الذمم، شذوذ القيود، وألتمان Z.</p></header>
+  <div class="radar-stage">
+    <div class="radar-sweep" aria-hidden="true"></div>
+    <div class="blip b1" style="--d:0s">⚠️</div>
+    <div class="blip b2" style="--d:.9s">💰</div>
+    <div class="blip b3" style="--d:1.7s">📅</div>
+    <div class="blip b4" style="--d:2.4s">🔢</div>
+    <div class="radar-core"><b id="risk-big">0</b><small>/100</small></div>
+  </div>
+  <div class="grid g2">
+    <div class="panel"><h3>📡 مكونات المؤشر</h3><div class="risk-parts" id="risk-parts"></div></div>
+    <div class="panel"><h3>🕳️ أخطر الاكتشافات</h3><div class="threats" id="threats"></div></div>
+  </div>
+  <div class="grid k4">
+    <div class="panel stat"><small>بنفورد NED</small><b class="c-red">7.73</b><span>INVESTIGATE</span></div>
+    <div class="panel stat"><small>ألتمان Z</small><b class="c-red">0.31</b><span>DISTRESS</span></div>
+    <div class="panel stat"><small>قيود مشتبهة</small><b class="c-orange">220</b><span>يدوي نهاية-فترة</span></div>
+    <div class="panel stat"><small>ثوابت محاسبية</small><b class="c-green">0 فادح</b><span>سلامة ✓</span></div>
+  </div>
+</section>
+
+<!-- ═══ كنز الحسابات ═══ -->
+<section class="view" id="v-ledger">
+  <header class="vh"><h2>💎 كنز الحسابات</h2><p>أطلس 100,000 حساب من مختبر الحجم الأقصى — بحث لحظي وفرز وإحصاءات حية.</p></header>
+  <div class="tools">
+    <input id="q" type="search" placeholder="🔎 ابحث بالاسم أو الكود…" autocomplete="off">
+    <select id="ftype"><option value="">كل الأنواع</option><option value="asset">أصول</option><option value="liability">خصوم</option><option value="equity">حقوق ملكية</option><option value="revenue">إيرادات</option><option value="expense">مصروفات</option><option value="suspense">معلّقة</option></select>
+    <select id="fsort"><option value="code">ترتيب: الكود</option><option value="bal">الأكبر رصيدًا</option></select>
+  </div>
+  <div class="chips-row" id="type-stats"></div>
+  <div class="tall-table"><table class="tbl mono" id="tbl"><thead><tr><th>الكود</th><th>الحساب</th><th>النوع</th><th>الرصيد</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<!-- ═══ ديوان التقارير ═══ -->
+<section class="view" id="v-reports">
+  <header class="vh"><h2>📜 ديوان التقارير</h2><p>عشرة فصول احترافية بمستوى المنشورات المالية — مع محاكاة سيناريوهات فورية.</p></header>
+  <div class="sim-bar">
+    <span class="sim-lbl">🎛️ محاكاة السيناريو:</span>
+    <input type="range" id="sim" min="-40" max="40" step="5" value="0">
+    <output id="sim-val">±0%</output>
+    <button class="btn ghost sm" id="sim-reset">تصفير</button>
+  </div>
+  <div class="rep-menu" id="rep-menu"></div>
+  <article class="panel report-stage" id="rep-view" aria-live="polite"></article>
+  <div class="row-actions">
+    <button class="btn ghost sm" id="btn-print">🖨 طباعة / PDF</button>
+    <button class="btn ghost sm" id="btn-csv">⬇ تصدير CSV</button>
+  </div>
+</section>
+
+<!-- ═══ الأجواء ═══ -->
+<section class="view" id="v-sky">
+  <header class="vh"><h2>🌤 الأجواء</h2><p>ثمانية أجواء سماوية × ست حالات — سماء فجر، ظهيرة، غروب، ليل، عاصفة ثلجية، وشفق. انقر ليغمر كل شيء.</p></header>
+  <div class="theme-families" id="sky-families"></div>
+  <div class="theme-grid" id="sky-grid"></div>
+</section>
+
+<!-- ═══ المختبر ═══ -->
+<section class="view" id="v-lab">
+  <header class="vh"><h2>🧪 مختبر الشهادات</h2><p>شهادات التنفيذ الفعلية — نفس البذرة، نفس الأرقام، إلى الأبد.</p></header>
+  <div class="grid g2">
+    <div class="panel"><h3>📜 شهادة 100K</h3><pre class="code" id="cert-100k"></pre></div>
+    <div class="panel"><h3>📜 شهادة 5000</h3><pre class="code" id="cert-5k"></pre></div>
+  </div>
+  <div class="panel"><h3>🔬 إجراءات اجتازتها</h3><div class="pass-list" id="pass-list"></div></div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>السحاب الأبيض v1.0 · محرك حتمي · بذرة 20260823</span>
+  <a href="https://github.com/kosif199022-jpg/moon" target="_blank" rel="noopener">GitHub ↗</a>
+  <a href="https://kosif.kosif199022.workers.dev" target="_blank" rel="noopener">KOSIF الأصلي ↗</a>
+  <a href="https://aurora-finance.kosif199022.workers.dev" target="_blank" rel="noopener">AURORA ↗</a>
+</footer>
+
+<button class="chat-fab" id="chat-fab" aria-label="محادثة السحاب">💬</button>
+<div class="chat-panel" id="chat-panel" role="dialog" aria-label="محادثة مباشرة">
+  <div class="chat-head"><b>مساعد السحاب</b><span class="badge-guard">🛡 مراجعة مجلسية قبل الإجابة</span><button id="chat-close">✕</button></div>
+  <div class="chat-msgs" id="chat-msgs"></div>
+  <div class="chat-hints" id="chat-hints"></div>
+  <div class="chat-row">
+    <button id="chat-mic" title="تحدث">🎙</button>
+    <input id="chat-q" placeholder="اسأل عن أي شيء مالي…" autocomplete="off">
+    <button id="chat-send">➤</button>
+  </div>
+</div>
+
+<script src="/cloud.themes.js?v=1" defer></script>
+<script src="/cloud.data.js?v=1" defer></script>
+<script src="/cloud.reports.js?v=1" defer></script>
+<script src="/cloud.app.js?v=1" defer></script>
+</body>
+</html>
