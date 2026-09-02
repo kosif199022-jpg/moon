@@ -22,6 +22,16 @@ pnpm check
 
 تتحقق البوابة من سلامة HTML وJavaScript، غياب الملفات السرية، اختبارات وحدة النقود، TypeScript، وبناء حزمتي `domain` و`api`.
 
+## النشر على GitHub Pages
+
+يتطلب GitHub تفعيل Pages مرة واحدة بصلاحية مدير المستودع:
+
+1. افتح `Settings → Pages`.
+2. اختر `GitHub Actions` ضمن `Build and deployment → Source`.
+3. افتح `Actions → Deploy static Moon demo to GitHub Pages` ثم شغّل `Run workflow`.
+
+بعد نجاح النشر يكون العنوان المتوقع: `https://kosif199022-jpg.github.io/moon/`.
+
 ## تشغيل واجهة API الاختبارية
 
 ```bash

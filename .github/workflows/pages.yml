@@ -1,12 +1,9 @@
 name: Deploy static Moon demo to GitHub Pages
 
+# Repository administrators must first choose “GitHub Actions” as the Pages source
+# in Settings → Pages. The connected GitHub App cannot change this admin setting.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "public/**"
-      - ".github/workflows/pages.yml"
 
 permissions:
   contents: read
@@ -26,8 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
