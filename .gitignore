@@ -1,2 +1,36 @@
+# Dependencies and build output
 node_modules/
-.wrangler/
+dist/
+build/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+
+# Runtime data
+logs/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+tmp/
+temp/
+.cache/
+
+# Licensed/private reference material
+references/private/
+*.local.pdf
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

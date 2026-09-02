@@ -1,8 +1,0 @@
-name = "white-cloud"
-main = "src/worker.js"
-compatibility_date = "2026-08-20"
-workers_dev = true
-
-[assets]
-binding = "ASSETS"
-directory = "./public"

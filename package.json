@@ -1,11 +1,24 @@
 {
-  "name": "white-cloud",
+  "name": "moon-ai-audit-os",
   "version": "1.0.0",
+  "description": "Arabic-first audit operating system with deterministic financial engines and human approval gates.",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@9.15.5",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "dev": "npx wrangler dev",
-    "deploy": "npx wrangler deploy",
-    "check": "node scripts/check.mjs"
+    "dev": "node scripts/serve.mjs",
+    "dev:api": "pnpm --filter @moon/api dev",
+    "build": "pnpm --filter @moon/domain build && pnpm --filter @moon/api build",
+    "test": "node scripts/validate-static.mjs && pnpm --filter @moon/domain test:unit",
+    "type-check": "pnpm --filter @moon/domain type-check && pnpm --filter @moon/domain build && pnpm --filter @moon/api type-check",
+    "check": "pnpm type-check && pnpm test && pnpm build",
+    "db:migrate": "node database/migrate.js",
+    "db:seed": "node database/seed.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
   }
 }
