@@ -1,0 +1,164 @@
+#!/bin/sh
+# Cinema C — cloud (Linux) port of the a-Shell "Cinema C V32 AudioLab" script.
+# Non-interactive, so Claude can run it directly on any link.
+#
+#   c URL                      best MP4 (H.264+AAC when available)
+#   c URL -q 720               cap height (360/480/720/1080/1440/2160)
+#   c URL -a m4a | -a mp3      audio only
+#   c URL --safe               also build a Photos-safe MP4 (H.264/AAC/yuv420p/faststart)
+#   c URL --lab MODE           download, then Audio Lab (see below)
+#   c --lab MODE FILE          Audio Lab on a local file (no internet)
+#   c URL --cookies FILE       private / login-only posts (Netscape cookies.txt)
+#   c --formats URL            list the formats the site reports
+#   c --setup | --update       install / upgrade yt-dlp (+ browser impersonation)
+#
+# Audio Lab MODES: voice | music | novoice | nomusic | all
+#   voice   = speech only (RNNoise neural model + FFT denoise + loudness)
+#   music   = music only (phase-cancel karaoke, needs real stereo)
+#   nomusic = video with voice only     novoice = video with music only
+# Output: $CINEMA_DOWNLOAD_DIR (default /home/user/Cinema_Downloads)
+
+set -u
+DL=${CINEMA_DOWNLOAD_DIR:-/home/user/Cinema_Downloads}
+STATE=${CINEMA_STATE_DIR:-${TMPDIR:-/tmp}/cinema}
+CONN=${CINEMA_CONNECTIONS:-8}
+
+say() { printf '%s\n' "$*"; }
+err() { printf 'ERROR: %s\n' "$*" >&2; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+setup() {
+  python3 -m pip install -q --upgrade "yt-dlp[default,curl-cffi]" 2>&1 | grep -v 'as the .root. user' || true
+  have yt-dlp && say "yt-dlp $(yt-dlp --version) ready"
+}
+ensure_ytdlp() { have yt-dlp || setup; have yt-dlp || { err 'yt-dlp install failed'; exit 1; }; }
+
+URL=''; Q=''; AUDIO=''; SAFE=0; LAB=''; FILE=''; COOKIES=''; FORMATS=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -q|--quality) Q=$2; shift ;;
+    -a|--audio) AUDIO=$2; shift ;;
+    --safe) SAFE=1 ;;
+    --lab) LAB=$2; shift ;;
+    --cookies) COOKIES=$2; shift ;;
+    --formats) FORMATS=1 ;;
+    --setup|--update) setup; exit 0 ;;
+    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
+    http://*|https://*) URL=$1 ;;
+    *) FILE=$1 ;;
+  esac
+  shift
+done
+[ -n "$URL" ] || [ -n "$FILE" ] || { sed -n '2,22p' "$0"; exit 1; }
+mkdir -p "$DL" "$STATE" || exit 1
+
+# ---------------------------------------------------------------- download
+OUT=''
+yt() {  # $1 selector, $2 impersonate target (optional)
+  JOB=$(mktemp -d "$STATE/job.XXXXXX")
+  sel=$1; imp=${2:-}
+  set -- --no-playlist --newline --no-part --concurrent-fragments "$CONN" \
+    --retries 10 --fragment-retries 10 --extractor-retries 3 --socket-timeout 30 \
+    --js-runtimes node -f "$sel" -o "$JOB/%(title).120B [%(id)s].%(ext)s"
+  [ -z "$COOKIES" ] || set -- "$@" --cookies "$COOKIES"
+  [ -z "$imp" ] || set -- "$@" --impersonate "$imp"
+  case "$AUDIO" in
+    m4a) set -- "$@" -x --audio-format m4a ;;
+    mp3) set -- "$@" -x --audio-format mp3 --audio-quality 0 ;;
+    *)   set -- "$@" --merge-output-format mp4 ;;
+  esac
+  yt-dlp "$@" "$URL" || { rm -rf "$JOB"; return 1; }
+  n=0
+  for f in "$JOB"/*; do
+    case "$f" in *.mp4|*.m4v|*.mov|*.mkv|*.webm|*.ogv|*.m4a|*.mp3|*.aac|*.opus|*.ogg|*.wav) OUT=$f; n=$((n+1)) ;; esac
+  done
+  [ "$n" -eq 1 ] || { err "expected 1 media file, found $n"; rm -rf "$JOB"; return 1; }
+  dest="$DL/${OUT##*/}"
+  [ -e "$dest" ] && dest="$DL/$(date +%Y%m%d_%H%M%S)_${OUT##*/}"
+  mv "$OUT" "$dest" && OUT=$dest; rm -rf "$JOB"
+}
+
+download() {
+  ensure_ytdlp
+  if [ -n "$AUDIO" ]; then sel='ba[ext=m4a]/ba/b'; fb='ba/b/best'
+  elif [ -n "$Q" ] && [ "$Q" != best ]; then
+    sel="bv*[height<=$Q][ext=mp4][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=$Q][ext=mp4]+ba/b[height<=$Q][ext=mp4]/bv*[height<=$Q]+ba/b[height<=$Q]/best"
+    fb='bv*+ba/b/best'
+  else sel='bv*[ext=mp4][vcodec^=avc1]+ba[ext=m4a]/bv*[ext=mp4]+ba/b[ext=mp4]/bv*+ba/best'; fb='bv*+ba/b/best'; fi
+  yt "$sel" && return 0
+  say 'WARN: retrying with any available format...'; yt "$fb" && return 0
+  say 'WARN: retrying with browser impersonation...'
+  for t in chrome safari; do yt "$fb" "$t" && return 0; done
+  err 'download failed. Try: c --update ; private posts need --cookies cookies.txt'
+  case "$URL" in *youtube.com*|*youtu.be*) err 'YouTube blocks this cloud server IP; pass --cookies or send a different source.' ;; esac
+  return 1
+}
+
+photos_safe() {
+  in=$1; stem=${in##*/}; stem=${stem%.*}; out="$DL/PhotosSafe_$stem.mp4"
+  say '[C] Building Photos-safe MP4 (H.264 + AAC + yuv420p + faststart)...'
+  ffmpeg -y -nostdin -hide_banner -loglevel error -i "$in" -map 0:v:0 -map '0:a:0?' -sn -dn \
+    -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p -c:a aac -b:a 192k \
+    -movflags +faststart "$out" && say "SAFE: $out"
+}
+
+# ---------------------------------------------------------------- audio lab
+ff() { ffmpeg -y -nostdin -hide_banner -loglevel error "$@"; }
+rnn() {
+  m="$STATE/models/lq.rnnn"; [ -s "$m" ] && { printf '%s' "$m"; return 0; }
+  mkdir -p "$STATE/models"
+  curl -fsSL --max-time 120 -o "$m" https://raw.githubusercontent.com/richardpl/arnndn-models/master/lq.rnnn \
+    && [ -s "$m" ] && printf '%s' "$m"
+}
+lab() {  # $1 mode, $2 file
+  mode=$1; src=$2; [ -f "$src" ] || { err "file not found: $src"; return 1; }
+  od="$DL/Audio_Lab"; mkdir -p "$od"
+  stem=${src##*/}; stem=${stem%.*}; stem=${stem#PhotosSafe_}
+  J=$(mktemp -d "$STATE/lab.XXXXXX"); W="$J/src.wav"
+  ff -i "$src" -vn -map 0:a:0 -ar 48000 -c:a pcm_s16le "$W" || { err 'no audio track'; rm -rf "$J"; return 1; }
+  side=$(ffmpeg -nostdin -hide_banner -i "$W" -af 'pan=mono|c0=c0-c1,volumedetect' -f null - 2>&1 \
+    | sed -n 's/.*max_volume: *\(-*[0-9]*\).*/\1/p' | head -1)
+  stereo=0; [ -n "$side" ] && [ "$side" -gt -45 ] 2>/dev/null && stereo=1
+  video=0; ffmpeg -nostdin -hide_banner -i "$src" 2>&1 | grep -q 'Stream.*Video' && video=1
+
+  voice() {
+    c=''; [ $stereo -eq 1 ] && c='pan=mono|c0=0.5*c0+0.5*c1,'
+    c="${c}highpass=f=80,lowpass=f=8000"
+    if m=$(rnn); then c="$c,arnndn=m='$m',afftdn=nf=-30"; else c="$c,afftdn=nr=24:nf=-28"; fi
+    ff -i "$W" -af "$c,dynaudnorm=f=200:g=11,alimiter=limit=0.95" -ar 48000 "$J/voice.wav"
+  }
+  music() {
+    [ $stereo -eq 1 ] || { err 'music-only needs a real stereo mix (this source is mono)'; return 1; }
+    ff -i "$W" -filter_complex '[0:a]asplit=2[a][b];[a]pan=stereo|c0=c0-c1|c1=c1-c0,highpass=f=140[s];[b]pan=mono|c0=0.5*c0+0.5*c1,lowpass=f=140,pan=stereo|c0=c0|c1=c0[l];[s][l]amerge=inputs=2,pan=stereo|c0=c0+c2|c1=c1+c3,alimiter=limit=0.95[o]' \
+      -map '[o]' -ar 48000 "$J/music.wav"
+  }
+  enc() { ff -i "$1" -ac 2 -c:a aac -b:a 256k -movflags +faststart "$2" && say "LAB: $2"; }
+  mux() {
+    [ $video -eq 1 ] || { err 'source has no video'; return 1; }
+    ff -i "$src" -i "$1" -map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -b:a 192k -ac 2 -shortest -movflags +faststart "$2" \
+      || ff -i "$src" -i "$1" -map 0:v:0 -map 1:a:0 -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p \
+           -c:a aac -b:a 192k -ac 2 -shortest -movflags +faststart "$2" || return 1
+    say "LAB: $2"
+  }
+  rc=0
+  case "$mode" in
+    voice)   voice && enc "$J/voice.wav" "$od/$stem - voice.m4a" || rc=1 ;;
+    music)   music && enc "$J/music.wav" "$od/$stem - music.m4a" || rc=1 ;;
+    nomusic) voice && mux "$J/voice.wav" "$od/$stem - no music.mp4" || rc=1 ;;
+    novoice) music && mux "$J/music.wav" "$od/$stem - no voice.mp4" || rc=1 ;;
+    all)     voice && enc "$J/voice.wav" "$od/$stem - voice.m4a" || rc=1
+             music && enc "$J/music.wav" "$od/$stem - music.m4a" || rc=1 ;;
+    *) err "unknown lab mode: $mode"; rc=1 ;;
+  esac
+  rm -rf "$J"; return $rc
+}
+
+# ---------------------------------------------------------------- main
+if [ "$FORMATS" -eq 1 ]; then ensure_ytdlp; exec yt-dlp -F --no-playlist --js-runtimes node "$URL"; fi
+if [ -n "$URL" ]; then
+  download || exit 1
+  say "DONE: $OUT"
+  [ "$SAFE" -eq 1 ] && photos_safe "$OUT"
+  FILE=$OUT
+fi
+[ -z "$LAB" ] || lab "$LAB" "$FILE"
