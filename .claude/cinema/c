@@ -117,7 +117,7 @@ photos_safe() {
   in=$1; stem=${in##*/}; stem=${stem%.*}; out="$DL/PhotosSafe_$stem.mp4"
   say '[C] Building Photos-safe MP4 (H.264 + AAC + yuv420p + faststart)...'
   ffmpeg -y -nostdin -hide_banner -loglevel error -i "$in" -map 0:v:0 -map '0:a:0?' -sn -dn \
-    -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p -c:a aac -b:a 192k -ar 48000 -ac 2 \
+    -c:v libx264 -profile:v main -level 4.0 -preset veryfast -crf 18 -pix_fmt yuv420p -c:a aac -profile:a aac_low -b:a 192k -ar 44100 -ac 2 \
     -movflags +faststart "$out" && say "SAFE: $out"
 }
 
