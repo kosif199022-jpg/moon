@@ -78,6 +78,23 @@ yt() {  # $1 selector, $2 impersonate target (optional)
   mv "$OUT" "$dest" && OUT=$dest; rm -rf "$JOB"
 }
 
+# Video downloads must carry a real (non-silent) audio track; otherwise drop the
+# file so the caller retries another format. Audio-only mode is not checked here.
+audio_ok() {
+  [ -n "$AUDIO" ] && return 0
+  [ -f "$OUT" ] || return 1
+  if ! ffprobe -v error -select_streams a -show_entries stream=codec_type -of csv=p=0 "$OUT" | grep -q audio; then
+    say "WARN: downloaded file has NO audio track: ${OUT##*/}"; rm -f "$OUT"; return 1
+  fi
+  peak=$(ffmpeg -nostdin -hide_banner -i "$OUT" -map 0:a:0 -af volumedetect -f null - 2>&1 \
+    | sed -n 's/.*max_volume: *\(-*[0-9]*\).*/\1/p' | head -1)
+  case "$peak" in ''|*inf*) peak=-999 ;; esac
+  if [ "$peak" -le -60 ] 2>/dev/null; then
+    say "WARN: audio track is silent (peak ${peak} dB): ${OUT##*/}"; rm -f "$OUT"; return 1
+  fi
+  return 0
+}
+
 download() {
   ensure_ytdlp
   if [ -n "$AUDIO" ]; then sel='ba[ext=m4a]/ba/b'; fb='ba/b/best'
@@ -85,10 +102,12 @@ download() {
     sel="bv*[height<=$Q][ext=mp4][vcodec^=avc1]+ba[ext=m4a]/bv*[height<=$Q][ext=mp4]+ba/b[height<=$Q][ext=mp4]/bv*[height<=$Q]+ba/b[height<=$Q]/best"
     fb='bv*+ba/b/best'
   else sel='bv*[ext=mp4][vcodec^=avc1]+ba[ext=m4a]/bv*[ext=mp4]+ba/b[ext=mp4]/bv*+ba/best'; fb='bv*+ba/b/best'; fi
-  yt "$sel" && return 0
-  say 'WARN: retrying with any available format...'; yt "$fb" && return 0
+  yt "$sel" && audio_ok && return 0
+  say 'WARN: retrying with any available format...'; yt "$fb" && audio_ok && return 0
+  say 'WARN: retrying with a format that has audio built in...'
+  yt 'b[acodec!=none][vcodec!=none]/bv*+ba[acodec!=none]' && audio_ok && return 0
   say 'WARN: retrying with browser impersonation...'
-  for t in chrome safari; do yt "$fb" "$t" && return 0; done
+  for t in chrome safari; do yt "$fb" "$t" && audio_ok && return 0; done
   err 'download failed. Try: c --update ; private posts need --cookies cookies.txt'
   case "$URL" in *youtube.com*|*youtu.be*) err 'YouTube blocks this cloud server IP; pass --cookies or send a different source.' ;; esac
   return 1
@@ -98,7 +117,7 @@ photos_safe() {
   in=$1; stem=${in##*/}; stem=${stem%.*}; out="$DL/PhotosSafe_$stem.mp4"
   say '[C] Building Photos-safe MP4 (H.264 + AAC + yuv420p + faststart)...'
   ffmpeg -y -nostdin -hide_banner -loglevel error -i "$in" -map 0:v:0 -map '0:a:0?' -sn -dn \
-    -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p -c:a aac -b:a 192k \
+    -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p -c:a aac -b:a 192k -ar 48000 -ac 2 \
     -movflags +faststart "$out" && say "SAFE: $out"
 }
 
@@ -157,6 +176,12 @@ lab() {  # $1 mode, $2 file
 if [ "$FORMATS" -eq 1 ]; then ensure_ytdlp; exec yt-dlp -F --no-playlist --js-runtimes node "$URL"; fi
 if [ -n "$URL" ]; then
   download || exit 1
+  # HEVC/VP9/AV1 (common on TikTok) often plays silent or not at all on phones and
+  # in-app previews: always add an H.264/AAC copy for those.
+  if [ -z "$AUDIO" ] && [ "$SAFE" -eq 0 ]; then
+    vc=$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 "$OUT")
+    [ -n "$vc" ] && [ "$vc" != h264 ] && SAFE=1
+  fi
   say "DONE: $OUT"
   [ "$SAFE" -eq 1 ] && photos_safe "$OUT"
   FILE=$OUT
